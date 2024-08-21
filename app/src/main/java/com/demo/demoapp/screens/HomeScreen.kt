@@ -60,16 +60,7 @@ fun PostsApp(viewModel: HomeViewModel) {
 
     when {
         posts.loading == true -> {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Loading...",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+           LoadingScreen()
         }
 
         posts.data != null -> {
@@ -89,9 +80,10 @@ fun PostsApp(viewModel: HomeViewModel) {
                     ) {
                         items(items = posts.data!!) { post ->
                             val username = viewModel.getUsernameById(post.userId)
+                            val commentCount = viewModel.getCommentsCountsByPostId(post.id)
                             PostRow(
                                 post = post,
-                                commentSize = viewModel.getCommentsCountsByPostId(post.id),
+                                commentSize = commentCount,
                                 username = username,
                                 onClick = {
                                     selectedComments = viewModel.getCommentsForPost(post.id)
@@ -117,11 +109,13 @@ fun PostsApp(viewModel: HomeViewModel) {
         }
 
         else -> ErrorScreen(retryAction = {
-            viewModel.getPosts()
+            viewModel.getPostsAndComments()
             Toast.makeText(context, "Retrying...", Toast.LENGTH_SHORT).show()
         })
     }
 }
+
+
 
 @Composable
 fun CommentsBottomSheet(comments: List<Comment>, viewModel: HomeViewModel) {
@@ -215,6 +209,20 @@ fun PostRow(
     }
 }
 
+@Composable
+fun LoadingScreen() {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = "Loading...",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
 @Preview
 @Composable

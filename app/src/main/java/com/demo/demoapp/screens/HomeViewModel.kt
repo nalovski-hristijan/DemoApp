@@ -9,6 +9,7 @@ import com.demo.demoapp.model.User
 import com.demo.demoapp.repository.DemoRepository
 import com.demo.demoapp.utils.parseUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,8 +34,20 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
     private val users = parseUserList()
 
     init {
-        getPosts()
-        getComments()
+        getPostsAndComments()
+    }
+
+    fun getPostsAndComments() {
+        viewModelScope.launch {
+            val postsDeferred = async { repository.getPosts() }
+            val commentsDeferred = async { repository.getComments() }
+
+            val postsResult = postsDeferred.await()
+            val commentsResult = commentsDeferred.await()
+
+            _postsState.value = postsResult
+            _commentsState.value = commentsResult
+        }
     }
 
     fun getCommentsForPost(postId: Int): List<Comment> {
@@ -53,20 +66,6 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
     fun getCommentWithUser(comment: Comment): Pair<Comment, User?> {
         val user = users.find { it.email == comment.email }
         return comment to user
-    }
-
-
-    fun getPosts() {
-        viewModelScope.launch {
-            _postsState.value = repository.getPosts()
-        }
-    }
-
-
-    fun getComments() {
-        viewModelScope.launch {
-            _commentsState.value = repository.getComments()
-        }
     }
 
 }
