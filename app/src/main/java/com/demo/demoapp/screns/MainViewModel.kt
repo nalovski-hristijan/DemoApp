@@ -50,7 +50,7 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
         address = Address("", Geo("",""),"", "", ""),
         company = Company("", "",""),
         email = "",
-        id = 11,
+        id = -1,
         phone = "",
         username = "guestUser",
         website = ""
