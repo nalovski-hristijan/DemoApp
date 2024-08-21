@@ -1,14 +1,17 @@
 package com.demo.demoapp.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,11 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.demo.demoapp.R
 import com.demo.demoapp.components.PostsTopAppBar
 import com.demo.demoapp.model.Comment
 import com.demo.demoapp.model.Post
@@ -60,7 +66,7 @@ fun PostsApp(viewModel: HomeViewModel) {
 
     when {
         posts.loading == true -> {
-           LoadingScreen()
+            LoadingScreen()
         }
 
         posts.data != null -> {
@@ -114,7 +120,6 @@ fun PostsApp(viewModel: HomeViewModel) {
         })
     }
 }
-
 
 
 @Composable
@@ -176,35 +181,50 @@ fun PostRow(
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         shape = RoundedCornerShape(corner = CornerSize(5.dp))
     ) {
-        Column(
-            modifier = Modifier.padding(10.dp)
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = post.title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+            Image(
+                modifier = Modifier
+                    .size(100.dp)
+                    .padding(start = 10.dp),
+                painter = painterResource(id = R.drawable.placeholder),
+                contentDescription = "Placeholder image",
+                contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = post.body,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                modifier = Modifier.padding(10.dp)
+            ) {
+                Text(
+                    text = post.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Text(
-                text = "Posted by: $username",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "$commentSize comments",
-                style = MaterialTheme.typography.bodyMedium
-            )
+                Text(
+                    text = post.body,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Posted by: $username",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "$commentSize comments",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
