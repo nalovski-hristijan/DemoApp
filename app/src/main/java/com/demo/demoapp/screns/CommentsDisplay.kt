@@ -42,7 +42,7 @@ fun CommentsBottomSheet(
 @Composable
 fun CommentDisplay(
     comment: Comment,
-    user: User?,
+    user: User,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -69,7 +69,7 @@ fun CommentDisplay(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = user?.name ?: "Guest User",
+                    text = user.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Light
                 )

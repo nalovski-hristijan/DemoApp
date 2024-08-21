@@ -43,7 +43,7 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
     var selectedComments: List<Comment> by mutableStateOf(emptyList())
     var isSheetOpen by mutableStateOf(false)
 
-    private var users: List<User> by mutableStateOf(emptyList())
+    private val users = parseUserList()
 
     private val placeholderUser = User(
         name = "Guest User",
@@ -60,18 +60,19 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
     init {
         getPosts()
         getComments()
-        getUsers()
     }
 
+    // function for dismissing botomsheet
     fun onDismiss() {
         isSheetOpen = false
     }
+    //when post is clicked selected comments are that posts comments and bottomsheet should open
     fun onPostClicked(postId: Int) {
         selectedComments = commentsByPost[postId] ?: emptyList()
         isSheetOpen = true
     }
 
-    // Creates a Map<postId, List<Comment>>
+    // Creates a Map<postId, List<Comment>> to easily finf comments for each post
     private fun getCommentsByPostIdMap() {
         if (commentsUiState is CommentsUiState.Success){
             val comments = (commentsUiState as CommentsUiState.Success).commentList
@@ -80,24 +81,21 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
             }
         }
     }
-
+    //function to retrieve number of comments under a post
     fun getCommentsCountsByPostId(postId: Int) : Int{
         return commentsByPost[postId]?.size ?: 0
     }
-
+    //function to get a user with specified userId used to retrieve post Authors
     fun getUserById(userId: Int): User {
         return users.find { user ->
             user.id == userId
         } ?: placeholderUser
     }
-    fun getUserByEmail(userEmail: String) : User{
+    //function to get a user with specified email used to retrieve comment Authors
+    fun getUserByEmail(userEmail: String) : User {
         return users.find { user ->
             user.email == userEmail
         } ?: placeholderUser
-    }
-
-    private fun getUsers() {
-        users =  parseUserList()
     }
 
     fun getPosts(){
