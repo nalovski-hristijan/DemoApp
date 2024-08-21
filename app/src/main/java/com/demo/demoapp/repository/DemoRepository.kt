@@ -17,19 +17,8 @@ class DemoRepository @Inject constructor(private val api: DemoApi) {
             result.data = api.getPosts()
         } catch (e: Exception) {
             Log.d("Posts", "getPosts: $e")
-            result.loading = false
-        }
-
-        return result
-    }
-
-    suspend fun getUsers(): DataOrException<List<User>, Boolean, Exception> {
-        val result = DataOrException<List<User>, Boolean, Exception>()
-        try {
-            result.loading = true
-            result.data = api.getUsers()
-        } catch (e: Exception) {
-            Log.d("Users", "getPosts: $e")
+            result.e = e
+        } finally {
             result.loading = false
         }
 
@@ -43,6 +32,8 @@ class DemoRepository @Inject constructor(private val api: DemoApi) {
             result.data = api.getComments()
         } catch (e: Exception) {
             Log.d("Posts", "getPosts: $e")
+            result.e = e
+        } finally {
             result.loading = false
         }
 
