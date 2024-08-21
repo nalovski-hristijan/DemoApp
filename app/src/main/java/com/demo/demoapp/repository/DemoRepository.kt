@@ -9,43 +9,6 @@ import com.demo.demoapp.network.DemoApi
 import javax.inject.Inject
 
 class DemoRepository @Inject constructor(private val api: DemoApi) {
-
-    suspend fun getPosts(): DataOrException<List<Post>, Boolean, Exception> {
-        val result = DataOrException<List<Post>, Boolean, Exception>()
-        try {
-            result.loading = true
-            result.data = api.getPosts()
-        } catch (e: Exception) {
-            Log.d("Posts", "getPosts: $e")
-            result.loading = false
-        }
-
-        return result
-    }
-
-    suspend fun getUsers(): DataOrException<List<User>, Boolean, Exception> {
-        val result = DataOrException<List<User>, Boolean, Exception>()
-        try {
-            result.loading = true
-            result.data = api.getUsers()
-        } catch (e: Exception) {
-            Log.d("Users", "getPosts: $e")
-            result.loading = false
-        }
-
-        return result
-    }
-
-    suspend fun getComments(): DataOrException<List<Comment>, Boolean, Exception> {
-        val result = DataOrException<List<Comment>, Boolean, Exception>()
-        try {
-            result.loading = true
-            result.data = api.getComments()
-        } catch (e: Exception) {
-            Log.d("Posts", "getPosts: $e")
-            result.loading = false
-        }
-
-        return result
-    }
+    suspend fun getPosts(): List<Post> = api.getPosts()
+    suspend fun getComments():List<Comment> = api.getComments()
 }

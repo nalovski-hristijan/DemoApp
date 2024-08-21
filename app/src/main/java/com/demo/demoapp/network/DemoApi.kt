@@ -8,8 +8,6 @@ import javax.inject.Singleton
 
 @Singleton
 interface DemoApi {
-    @GET("users")
-    suspend fun getUsers(): List<User>
 
     @GET("posts")
     suspend fun getPosts(): List<Post>

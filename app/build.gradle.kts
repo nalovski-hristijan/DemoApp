@@ -53,8 +53,11 @@ android {
 
 dependencies {
 
+    //Gson
+    implementation("com.google.code.gson:gson:2.8.9")
+
     // ViewModel
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0")
     // ViewModel utilities for Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
