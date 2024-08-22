@@ -62,7 +62,7 @@ fun PostsApp(viewModel: HomeViewModel) {
     val isSheetOpen by viewModel.isSheetOpen.collectAsState()
 
     when {
-        posts.loading == true -> {
+        posts.loading == true && posts.data.isNullOrEmpty() -> {
             LoadingScreen()
         }
 
@@ -92,6 +92,21 @@ fun PostsApp(viewModel: HomeViewModel) {
                                     viewModel.setSelectedComments(viewModel.getCommentsForPost(post.id))
                                 })
                         }
+
+                        item {
+                            if (posts.loading == true) {
+                                LoadingItem()
+                            } else {
+                                Button(
+                                    onClick = { viewModel.loadMorePosts() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Text("Load More")
+                                }
+                            }
+                        }
                     }
 
                 }
@@ -114,6 +129,18 @@ fun PostsApp(viewModel: HomeViewModel) {
             viewModel.getPostsAndComments()
             Toast.makeText(context, "Retrying...", Toast.LENGTH_SHORT).show()
         })
+    }
+}
+
+@Composable
+fun LoadingItem() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Loading more posts...", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -148,7 +175,7 @@ fun CommentItem(comment: Comment, user: User?) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = user?.email ?: "Unknown",
+                text = comment.email,
                 style = MaterialTheme.typography.headlineSmall
             )
             Text(

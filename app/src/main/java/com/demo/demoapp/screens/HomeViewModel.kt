@@ -18,21 +18,23 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(private val repository: DemoRepository) : ViewModel() {
+    private val _allPosts = MutableStateFlow<List<Post>>(emptyList())
     private val _postsState = MutableStateFlow<DataOrException<List<Post>, Boolean, Exception>>(
         DataOrException(loading = true)
     )
     val postsState: StateFlow<DataOrException<List<Post>, Boolean, Exception>> =
         _postsState.asStateFlow()
 
+    private var currentPage = 1
+    private val pageSize = 10
+
     private val _commentsState =
         MutableStateFlow<DataOrException<List<Comment>, Boolean, Exception>>(
             DataOrException(loading = true)
         )
-    val commentsState: StateFlow<DataOrException<List<Comment>, Boolean, Exception>> =
-        _commentsState.asStateFlow()
+
 
     private val users = parseUserList()
-
 
     private val _selectedComments = MutableStateFlow<List<Comment>>(emptyList())
     val selectedComment = _selectedComments.asStateFlow()
@@ -40,17 +42,22 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
     private val _isSheetOpen = MutableStateFlow(false)
     val isSheetOpen = _isSheetOpen.asStateFlow()
 
-    fun setSelectedComments(comment: List<Comment>) {
-        _selectedComments.value = comment
-        _isSheetOpen.value = true
-    }
-
-    fun dismissSheet() {
-        _isSheetOpen.value = false
-    }
-
     init {
         getPostsAndComments()
+    }
+
+    private fun paginatePosts() {
+        val fromIndex = (currentPage - 1) * pageSize
+        val toIndex = kotlin.math.min(currentPage * pageSize, _allPosts.value.size)
+        if (fromIndex < toIndex) {
+            val paginatedPosts = _allPosts.value.subList(fromIndex, toIndex)
+            _postsState.value = DataOrException(
+                data = (_postsState.value.data ?: emptyList()) + paginatedPosts,
+                loading = false,
+                e = null
+            )
+            currentPage++
+        }
     }
 
     fun getPostsAndComments() {
@@ -61,9 +68,17 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
             val postsResult = postsDeferred.await()
             val commentsResult = commentsDeferred.await()
 
-            _postsState.value = postsResult
+            if (postsResult.data != null) {
+                _allPosts.value = postsResult.data!!
+                paginatePosts()
+            }
+
             _commentsState.value = commentsResult
         }
+    }
+
+    fun loadMorePosts() {
+        paginatePosts()
     }
 
     fun getCommentsForPost(postId: Int): List<Comment> {
@@ -74,7 +89,6 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
         return users.find { it.id == userId }?.username ?: "Unknown"
     }
 
-
     fun getCommentsCountsByPostId(postId: Int): Int {
         return getCommentsForPost(postId).size
     }
@@ -84,4 +98,13 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
         return comment to user
     }
 
+    fun setSelectedComments(comment: List<Comment>) {
+        _selectedComments.value = comment
+        _isSheetOpen.value = true
+    }
+
+    fun dismissSheet() {
+        _isSheetOpen.value = false
+    }
 }
+
