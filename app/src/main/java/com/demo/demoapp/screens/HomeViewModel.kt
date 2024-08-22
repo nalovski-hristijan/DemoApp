@@ -33,6 +33,22 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
 
     private val users = parseUserList()
 
+
+    private val _selectedComments = MutableStateFlow<List<Comment>>(emptyList())
+    val selectedComment = _selectedComments.asStateFlow()
+
+    private val _isSheetOpen = MutableStateFlow(false)
+    val isSheetOpen = _isSheetOpen.asStateFlow()
+
+    fun setSelectedComments(comment: List<Comment>) {
+        _selectedComments.value = comment
+        _isSheetOpen.value = true
+    }
+
+    fun dismissSheet() {
+        _isSheetOpen.value = false
+    }
+
     init {
         getPostsAndComments()
     }
@@ -59,7 +75,7 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
     }
 
 
-    fun getCommentsCountsByPostId(postId: Int) : Int{
+    fun getCommentsCountsByPostId(postId: Int): Int {
         return getCommentsForPost(postId).size
     }
 

@@ -57,12 +57,9 @@ import com.demo.demoapp.utils.parseUserList
 fun PostsApp(viewModel: HomeViewModel) {
     val posts by viewModel.postsState.collectAsState()
     val context = LocalContext.current
-    var selectedComments by remember { mutableStateOf<List<Comment>>(emptyList()) }
+    val selectedComments by viewModel.selectedComment.collectAsState()
     val bottomSheetState = rememberModalBottomSheetState()
-    var isSheetOpen by rememberSaveable {
-        mutableStateOf(false)
-    }
-
+    val isSheetOpen by viewModel.isSheetOpen.collectAsState()
 
     when {
         posts.loading == true -> {
@@ -92,8 +89,7 @@ fun PostsApp(viewModel: HomeViewModel) {
                                 commentSize = commentCount,
                                 username = username,
                                 onClick = {
-                                    selectedComments = viewModel.getCommentsForPost(post.id)
-                                    isSheetOpen = true
+                                    viewModel.setSelectedComments(viewModel.getCommentsForPost(post.id))
                                 })
                         }
                     }
@@ -105,7 +101,7 @@ fun PostsApp(viewModel: HomeViewModel) {
                 ModalBottomSheet(
                     sheetState = bottomSheetState,
                     onDismissRequest = {
-                        isSheetOpen = false
+                        viewModel.dismissSheet()
                     }
                 ) {
                     CommentsBottomSheet(comments = selectedComments, viewModel = viewModel)
