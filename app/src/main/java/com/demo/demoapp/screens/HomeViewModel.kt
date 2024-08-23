@@ -19,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(private val repository: DemoRepository) : ViewModel() {
     private val _allPosts = MutableStateFlow<List<Post>>(emptyList())
+
     private val _postsState = MutableStateFlow<DataOrException<List<Post>, Boolean, Exception>>(
         DataOrException(loading = true)
     )
@@ -59,6 +60,26 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
             currentPage++
         }
     }
+
+    fun getAllPostsSize(): Int {
+        return _allPosts.value.size
+    }
+
+    fun searchForPostByTitle(title: String) {
+        viewModelScope.launch {
+            val filteredPosts = if (title.isEmpty()) {
+                _allPosts.value
+            } else {
+                _allPosts.value.filter { it.title.contains(title, ignoreCase = true) }
+            }
+            _postsState.value = DataOrException(
+                data = filteredPosts,
+                loading = false,
+                e = null
+            )
+        }
+    }
+
 
     fun getPostsAndComments() {
         viewModelScope.launch {
