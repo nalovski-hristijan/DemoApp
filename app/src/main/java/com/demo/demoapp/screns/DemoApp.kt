@@ -5,12 +5,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,46 +44,73 @@ fun DemoApp(
     Box(
         modifier = modifier
     ) {
-        when (postsUiState) {
 
-            is PostsUiState.Success -> {
+        Column {
+            TextField(
+                value = viewModel.searchText,
+                onValueChange = { viewModel.updateSearchText(it) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null
+                    )
+                },
+                label = {
+                    Text(text = stringResource(R.string.search_posts))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            )
+            when (postsUiState) {
 
-                PostsListDisplay(
-                    posts = postsUiState.postList,
-                    count = { postId ->
-                        viewModel.getCommentsCountsByPostId(postId)
-                    },
-                    onClick = { postId ->
-                        viewModel.onPostClicked(postId)
-                    },
-                    findAuthor = { userId ->
-                        viewModel.getUserById(userId).name
-                    }
-                )
+                is PostsUiState.Success -> {
+                    PostsListDisplay(
+                        posts = postsUiState.postList,
+                        count = { postId ->
+                            viewModel.getCommentsCountsByPostId(postId)
+                        },
+                        onClick = { postId ->
+                            viewModel.onPostClicked(postId)
+                        },
+                        findAuthor = { userId ->
+                            viewModel.getUserById(userId).name
+                        },
+                        loadPosts = {
+                            viewModel.loadMorePosts()
+                        },
+                        maxIndex = viewModel.postsToDisplay.size - 1
+                    )
 
-                if (viewModel.isSheetOpen) {
-                    ModalBottomSheet(
-                        sheetState = bottomSheetState,
-                        onDismissRequest = { viewModel.onDismiss() }
-                    ) {
-                        when (commentsUiState) {
-                            is CommentsUiState.Success ->
-                                CommentsBottomSheet(
-                                    comments = viewModel.selectedComments,
-                                    user = { email ->
-                                        viewModel.getUserByEmail(email)
-                                    }
-                                )
+                    if (viewModel.isSheetOpen) {
+                        ModalBottomSheet(
+                            sheetState = bottomSheetState,
+                            onDismissRequest = { viewModel.onDismiss() }
+                        ) {
+                            when (commentsUiState) {
+                                is CommentsUiState.Success ->
+                                    CommentsBottomSheet(
+                                        comments = viewModel.selectedComments,
+                                        user = { email ->
+                                            viewModel.getUserByEmail(email)
+                                        }
+                                    )
 
-                            CommentsUiState.Error -> ErrorScreen(retryAction = { viewModel.getComments() })
-                            CommentsUiState.Loading -> LoadingScreen()
+                                CommentsUiState.Error -> ErrorScreen(retryAction = { viewModel.getComments() })
+                                CommentsUiState.Loading -> LoadingScreen()
+                            }
                         }
                     }
                 }
 
+                PostsUiState.Error -> ErrorScreen(
+                    retryAction = {
+                        viewModel.searchText = ""
+                        viewModel.getPosts()
+                    }
+                )
+                PostsUiState.Loading -> LoadingScreen()
             }
-            PostsUiState.Error -> ErrorScreen(retryAction = { viewModel.getPosts() })
-            PostsUiState.Loading -> LoadingScreen()
         }
     }
 }
@@ -89,10 +123,8 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxSize()
     ) {
-        Image(
-            modifier = Modifier.size(200.dp),
-            painter = painterResource(R.drawable.loading_img),
-            contentDescription = stringResource(R.string.loading)
+        CircularProgressIndicator(
+            modifier = Modifier.size(64.dp)
         )
     }
 }

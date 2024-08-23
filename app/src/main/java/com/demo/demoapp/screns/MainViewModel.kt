@@ -36,6 +36,14 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
     var postsUiState: PostsUiState by mutableStateOf(PostsUiState.Loading)
         private set
 
+    private var allPosts: List<Post> by mutableStateOf(emptyList())
+    var postsToDisplay: List<Post> by mutableStateOf(emptyList())
+
+
+
+    private val pageSize = 10
+    private var currentPage = 1
+
     var commentsUiState: CommentsUiState by mutableStateOf(CommentsUiState.Loading)
         private set
 
@@ -56,10 +64,34 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
         website = ""
     )
 
+    var searchText by mutableStateOf("")
+
 
     init {
         getPosts()
         getComments()
+    }
+
+    private fun searchPosts(){
+        try {
+            postsToDisplay = allPosts.filter {
+                it.title.contains(searchText, ignoreCase = true)
+            }
+            postsUiState = PostsUiState.Loading
+            if (postsToDisplay.isEmpty()) {
+                postsUiState = PostsUiState.Error
+            } else {
+                currentPage = 1
+                paginate()
+            }
+        } catch (e: IOException){
+            postsUiState = PostsUiState.Error
+        }
+    }
+
+    fun updateSearchText(string: String){
+        searchText = string
+        searchPosts()
     }
 
     // function for dismissing botomsheet
@@ -72,7 +104,7 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
         isSheetOpen = true
     }
 
-    // Creates a Map<postId, List<Comment>> to easily finf comments for each post
+    // Creates a Map<postId, List<Comment>> to easily find comments for each post
     private fun getCommentsByPostIdMap() {
         if (commentsUiState is CommentsUiState.Success){
             val comments = (commentsUiState as CommentsUiState.Success).commentList
@@ -98,12 +130,30 @@ class HomeScreenViewModel @Inject constructor(private val repository: DemoReposi
         } ?: placeholderUser
     }
 
+    private fun paginate(){
+        val fromIndex = (currentPage - 1) * pageSize
+        val toIndex = kotlin.math.min(currentPage * pageSize, postsToDisplay.size)
+        if (fromIndex < toIndex) {
+            val paginatedPosts = postsToDisplay.subList(fromIndex, toIndex)
+            postsUiState = PostsUiState.Success(
+                postList =
+                ((postsUiState as? PostsUiState.Success)?.postList ?: emptyList()) + paginatedPosts
+            )
+            currentPage++
+        }
+    }
+    fun loadMorePosts() {
+        paginate()
+    }
+
     fun getPosts(){
         viewModelScope.launch {
-            postsUiState = try {
-                PostsUiState.Success(repository.getPosts())
+            try {
+                allPosts = repository.getPosts()
+                postsToDisplay = allPosts
+                paginate()
             } catch (e: IOException) {
-                PostsUiState.Error
+                postsUiState = PostsUiState.Error
             }
         }
     }
