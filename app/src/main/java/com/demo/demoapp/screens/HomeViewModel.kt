@@ -28,12 +28,12 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
 
     private var currentPage = 1
     private val pageSize = 10
+    private var isLastPage = false
 
     private val _commentsState =
         MutableStateFlow<DataOrException<List<Comment>, Boolean, Exception>>(
             DataOrException(loading = true)
         )
-
 
     private val users = parseUserList()
 
@@ -48,8 +48,11 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
     }
 
     private fun paginatePosts() {
+        if (isLastPage) return
+
         val fromIndex = (currentPage - 1) * pageSize
         val toIndex = kotlin.math.min(currentPage * pageSize, _allPosts.value.size)
+
         if (fromIndex < toIndex) {
             val paginatedPosts = _allPosts.value.subList(fromIndex, toIndex)
             _postsState.value = DataOrException(
@@ -59,6 +62,10 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
             )
             currentPage++
         }
+
+        if (toIndex >= _allPosts.value.size) {
+            isLastPage = true
+        }
     }
 
     fun getAllPostsSize(): Int {
@@ -67,11 +74,16 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
 
     fun searchForPostByTitle(title: String) {
         viewModelScope.launch {
+            currentPage = 1
+            isLastPage = false
+
             val filteredPosts = if (title.isEmpty()) {
+                paginatePosts()
                 _allPosts.value
             } else {
                 _allPosts.value.filter { it.title.contains(title, ignoreCase = true) }
             }
+
             _postsState.value = DataOrException(
                 data = filteredPosts,
                 loading = false,
@@ -79,7 +91,6 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
             )
         }
     }
-
 
     fun getPostsAndComments() {
         viewModelScope.launch {
@@ -128,4 +139,5 @@ class HomeViewModel @Inject constructor(private val repository: DemoRepository) 
         _isSheetOpen.value = false
     }
 }
+
 

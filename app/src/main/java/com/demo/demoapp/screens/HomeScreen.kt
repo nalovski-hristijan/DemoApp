@@ -69,21 +69,25 @@ fun PostsApp(viewModel: HomeViewModel) {
     val bottomSheetState = rememberModalBottomSheetState()
     val isSheetOpen by viewModel.isSheetOpen.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
-    val searchQuery = rememberSaveable {
-        mutableStateOf("")
-    }
-
+    val searchQuery = rememberSaveable { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
 
     when {
-        posts.loading == true && posts.data.isNullOrEmpty() -> {
+        posts.loading == true -> {
             LoadingScreen()
         }
 
-        posts.data != null -> {
+        posts.e != null -> {
+
+            ErrorScreen(retryAction = {
+                viewModel.getPostsAndComments()
+                Toast.makeText(context, "Retrying...", Toast.LENGTH_SHORT).show()
+            })
+        }
+
+        else -> {
             Scaffold(
-                topBar = {
-                    PostsTopAppBar(title = "Posts")
-                }
+                topBar = { PostsTopAppBar(title = "Posts") }
             ) { innerPadding ->
                 Surface(
                     modifier = Modifier
@@ -92,8 +96,7 @@ fun PostsApp(viewModel: HomeViewModel) {
                 ) {
                     Column {
                         InputField(
-                            modifier = Modifier
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             valueState = searchQuery,
                             labelId = "Search posts",
                             onAction = KeyboardActions {
@@ -101,61 +104,68 @@ fun PostsApp(viewModel: HomeViewModel) {
                                 keyboardController?.hide()
                             }
                         )
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            itemsIndexed(items = posts.data!!) { index, post ->
-                                val username = viewModel.getUsernameById(post.userId)
-                                val commentCount = viewModel.getCommentsCountsByPostId(post.id)
-                                val coroutineScope = rememberCoroutineScope()
-                                PostRow(
-                                    post = post,
-                                    commentSize = commentCount,
-                                    username = username,
-                                    onClick = {
-                                        viewModel.setSelectedComments(
-                                            viewModel.getCommentsForPost(
-                                                post.id
+
+
+                        if (posts.data.isNullOrEmpty()) {
+                            if (searchQuery.value.isNotEmpty()) {
+                                Text(
+                                    text = "No posts found",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Red,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                itemsIndexed(posts.data!!) { index, post ->
+                                    val username = viewModel.getUsernameById(post.userId)
+                                    val commentCount = viewModel.getCommentsCountsByPostId(post.id)
+
+                                    PostRow(
+                                        post = post,
+                                        commentSize = commentCount,
+                                        username = username,
+                                        onClick = {
+                                            viewModel.setSelectedComments(
+                                                viewModel.getCommentsForPost(post.id)
                                             )
-                                        )
-                                    })
-                                if (index >= posts.data!!.size - 1 && index < viewModel.getAllPostsSize() - 1) {
-                                    CircularProgressIndicator()
-                                    coroutineScope.launch {
-                                        delay(500)
-                                        viewModel.loadMorePosts()
+                                        }
+                                    )
+
+                                    if (searchQuery.value.isEmpty() &&
+                                        index == posts.data!!.lastIndex &&
+                                        index < viewModel.getAllPostsSize() - 1
+                                    ) {
+                                        CircularProgressIndicator()
+                                        coroutineScope.launch {
+                                            delay(500)
+                                            viewModel.loadMorePosts()
+                                        }
                                     }
                                 }
                             }
                         }
-
                     }
-
-
                 }
             }
 
             if (isSheetOpen) {
                 ModalBottomSheet(
                     sheetState = bottomSheetState,
-                    onDismissRequest = {
-                        viewModel.dismissSheet()
-                    }
+                    onDismissRequest = { viewModel.dismissSheet() }
                 ) {
                     CommentsBottomSheet(comments = selectedComments, viewModel = viewModel)
                 }
             }
-
         }
-
-        else -> ErrorScreen(retryAction = {
-            viewModel.getPostsAndComments()
-            Toast.makeText(context, "Retrying...", Toast.LENGTH_SHORT).show()
-        })
     }
 }
+
+
 
 
 @Composable
